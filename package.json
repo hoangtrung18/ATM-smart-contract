@@ -9,7 +9,7 @@
     "ethereum-waffle": "3.4.0",
     "ethereumjs-util": "7.1.2",
     "ethereumjs-wallet": "1.0.2",
-    "ethers": "5.4.7",
+    "ethers": "^5.4.7",
     "hardhat": "2.9.3",
     "hardhat-gas-reporter": "^1.0.6"
   }

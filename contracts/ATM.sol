@@ -7,9 +7,9 @@ contract ATM is Ownable {
     mapping(address => uint256) private _limitWithdrawAmount;
     mapping(address => uint256) private _curentLimitWithdrawCount;
     mapping(address => uint256) private _lastWithdraw;
-    uint256 private _limitTime = 600; //10 min
-    uint256 private _limitWithdraw = 1000 * 10**18;
-    uint256 private _limitWithdrawTime = 10; //10 times
+    uint256 public _limitTime = 600; //10 min
+    uint256 public _limitWithdraw = 1000 * 10**18;
+    uint256 public _limitWithdrawTime = 10; //10 times
     uint256 public mintTransactionAmount = 0.01 * 10**18;
     uint256 _totalSupply = 1000000 * 10**18;
 
@@ -46,9 +46,9 @@ contract ATM is Ownable {
         _limitTime = limit;
     }
 
-    function setLimitAmount(uint256 limit) external onlyOwner {
+    function setLimitWithdraw(uint256 limit) external onlyOwner {
         require(limit > 0, "Limit amount withdraw should be great than 0");
-        _limitTime = limit;
+        _limitWithdraw = limit;
     }
 
     function withdraw() external payable verifyAmount {
