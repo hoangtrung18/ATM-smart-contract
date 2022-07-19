@@ -10,7 +10,7 @@ contract ATM is Ownable {
     uint256 public _limitTime = 600; //10 min
     uint256 public _limitWithdraw = 1000 * 10**18;
     uint256 public _limitWithdrawTime = 10; //10 times
-    uint256 public mintTransactionAmount = 0.01 * 10**18;
+    uint256 public _mintTransactionAmount = 0.01 * 10**18;
     uint256 _totalSupply = 1000000 * 10**18;
 
     constructor() {
@@ -20,7 +20,7 @@ contract ATM is Ownable {
 
     modifier verifyAmount() {
         require(
-            msg.value >= mintTransactionAmount,
+            msg.value >= _mintTransactionAmount,
             "Amount less than min transaction amount"
         );
         _;
@@ -75,14 +75,13 @@ contract ATM is Ownable {
         emit Withdraw(msg.sender, msg.value);
     }
 
-    function transfer(address a) external payable verifyAmount {
-        uint256 amount = msg.value;
+    function transfer(address a, uint256 amount) external payable {
+        require(amount >= _mintTransactionAmount, "Transfer amount less than min transaction amount");
         address requestAddress = msg.sender;
         uint256 balanceOfSender = _balances[requestAddress];
         require(balanceOfSender >= amount, "Invalid transfer amount");
         _balances[requestAddress] -= amount;
         _balances[a] += amount;
-        _balances[msg.sender] -= amount;
         emit Transfer(requestAddress, a, amount);
     }
 

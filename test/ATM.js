@@ -7,11 +7,12 @@ function expandTo18Decimals(n) {
 }
 
 describe("Test ATM", function () {
-  let contract, owner, other;
+  let contract, owner, other, other1;
   const ZERO_ADDRESS = ethers.constants.AddressZero;
+  const AMOUNT = expandTo18Decimals(10);
 
   beforeEach(async function () {
-    [owner, other] = await ethers.getSigners();
+    [owner, other, other1] = await ethers.getSigners();
     const Test = await ethers.getContractFactory("ATM", owner);
     contractD = await Test.deploy();
     contract = await contractD.deployed();
@@ -19,12 +20,11 @@ describe("Test ATM", function () {
 
   describe("deposit", function () {
     it("success", async function () {
-      const amount = expandTo18Decimals(0.01);
       expect(await contract.balanceOf(other.address)).to.be.eq(0);
-      await expect(contract.connect(other).deposit({ value: amount }))
+      await expect(contract.connect(other).deposit({ value: AMOUNT }))
         .to.emit(contract, "Deposit")
-        .withArgs(other.address, amount);
-      expect(await contract.balanceOf(other.address)).to.be.eq(amount);
+        .withArgs(other.address, AMOUNT);
+      expect(await contract.balanceOf(other.address)).to.be.eq(AMOUNT);
     });
 
     it("failure deposit", async function () {
@@ -57,18 +57,33 @@ describe("Test ATM", function () {
 
   describe("withdraw", function () {
     it("success", async function () {
-      const amount = expandTo18Decimals(10);
-      await contract.connect(other).deposit({ value: amount });
-      await expect(contract.connect(other).withdraw({ value: amount }))
+      await contract.connect(other).deposit({ value: AMOUNT });
+      await expect(contract.connect(other).withdraw({ value: AMOUNT }))
         .to.emit(contract, "Withdraw")
-        .withArgs(other.address, amount);
+        .withArgs(other.address, AMOUNT);
       expect(await contract.balanceOf(other.address)).to.be.eq(0);
     });
 
     it("failure withdraw", async function () {
       await expect(
-        contract.connect(other).deposit({ value: 0 })
+        contract.connect(other).withdraw({ value: 0 })
       ).to.be.revertedWith("Amount less than min transaction amount");
+    });
+  });
+
+  describe("transfer", function () {
+    it("success", async function () {
+      const balanceBefore =  await contract.balanceOf(other1.address) 
+      await expect(contract.transfer(other1.address, AMOUNT))
+        .to.emit(contract, "Transfer")
+        .withArgs(owner.address, other1.address, AMOUNT);
+      expect(await contract.balanceOf(other1.address)).to.be.eq(AMOUNT);
+    });
+
+    it("failure withdraw", async function () {
+      await expect(
+        contract.transfer(other1.address, 0)
+      ).to.be.revertedWith("Transfer amount less than min transaction amount");
     });
   });
 });
