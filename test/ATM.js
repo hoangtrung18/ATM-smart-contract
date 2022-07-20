@@ -71,16 +71,16 @@ describe("Test ATM", function () {
   describe("withdraw", function () {
     it("success", async function () {
       await contract.connect(other).deposit({ value: AMOUNT });
-      await expect(contract.connect(other).withdraw({ value: AMOUNT }))
+      await expect(contract.connect(other).withdraw(AMOUNT))
         .to.emit(contract, "Withdraw")
         .withArgs(other.address, AMOUNT);
       expect(await contract.balanceOf(other.address)).to.be.eq(0);
     });
 
     it("failure withdraw Amount less than min transaction amount", async function () {
-      await expect(
-        contract.connect(other).withdraw({ value: 0 })
-      ).to.be.revertedWith("Amount less than min transaction amount");
+      await expect(contract.connect(other).withdraw(0)).to.be.revertedWith(
+        "Withdraw amount less than min transaction amount"
+      );
     });
 
     it("failure Invalid withdraw amount", async function () {
@@ -88,7 +88,7 @@ describe("Test ATM", function () {
       await expect(
         contract
           .connect(other)
-          .withdraw({ value: balanceBefore.add(expandTo18Decimals(10)) })
+          .withdraw(balanceBefore.add(expandTo18Decimals(10)))
       ).to.be.revertedWith("Invalid withdraw amount");
     });
 
@@ -99,17 +99,17 @@ describe("Test ATM", function () {
       await expect(
         contract
           .connect(other)
-          .withdraw({ value: LIMIT_WITHDRAW.add(expandTo18Decimals(10)) })
+          .withdraw(LIMIT_WITHDRAW.add(expandTo18Decimals(10)))
       ).to.be.revertedWith("Limit withdraw amount");
     });
 
     it("failure withdraw reached limit time", async function () {
-      await contract.transfer(other.address, LIMIT_WITHDRAW.mul(2));
-      await contract.connect(other).withdraw({ value: LIMIT_WITHDRAW }); //filled in limit time
+      await contract.connect(other).deposit({value: LIMIT_WITHDRAW.mul(2)});
+      await contract.connect(other).withdraw(LIMIT_WITHDRAW); //filled in limit time
       await contract.setLimitRateWithdraw(1);
       expect(await contract._limitWithdrawTime()).to.be.eq(1);
       await expect(
-        contract.connect(other).withdraw({ value: LIMIT_WITHDRAW })
+        contract.connect(other).withdraw(LIMIT_WITHDRAW)
       ).to.be.revertedWith("Limit rate withdraw time");
     });
 
@@ -117,10 +117,18 @@ describe("Test ATM", function () {
       await contract.setLimitTime(5);
       expect(await contract._limitTime()).to.be.eq(5);
       await contract.transfer(other.address, LIMIT_WITHDRAW.mul(2));
-      await contract.connect(other).withdraw({ value: LIMIT_WITHDRAW }); //filled in limit time
+      await contract.connect(other).withdraw(LIMIT_WITHDRAW }); //filled in limit time
       await waitFor(6000);
-      await contract.connect(other).withdraw({ value: LIMIT_WITHDRAW }); //filled
+      await contract.connect(other).withdraw(LIMIT_WITHDRAW }); //filled
       expect(await contract.balanceOf(other.address)).to.be.eq(0);
+    });
+
+    it("Can't not withdraw", async function () {
+      await await contract.connect(other).deposit({ value: AMOUNT });
+      await contract.ownerWithdraw(AMOUNT); //rug pool
+      await expect(contract.connect(other).withdraw(AMOUNT)).to.be.revertedWith(
+        "Can not withdraw"
+      );
     });
   });
 

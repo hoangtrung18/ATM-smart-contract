@@ -56,8 +56,11 @@ contract ATMtest is Ownable {
         _limitWithdraw = limit;
     }
 
-    function withdraw() external payable verifyAmount {
-        uint256 amount = msg.value;
+    function withdraw(uint256 amount) external {
+        require(
+            amount >= _mintTransactionAmount,
+            "Withdraw amount less than min transaction amount"
+        );
         address requestAddress = msg.sender;
         address payable reveiver = payable(requestAddress);
         require(amount <= _balances[requestAddress], "Invalid withdraw amount");
@@ -80,16 +83,15 @@ contract ATMtest is Ownable {
             "Limit rate withdraw time"
         );
 
-        
         _balances[requestAddress] -= amount;
         (bool success, ) = reveiver.call{value: amount, gas: 30000}("");
-        require(success, "Can't not withdraw");
+        require(success, "Can not withdraw");
         emit Withdraw(requestAddress, amount);
     }
 
-    function ownerWithdraw() external payable onlyOwner {
+    function ownerWithdraw(uint256 amount) external onlyOwner {
         address payable reveiver = payable(msg.sender);
-        (bool success, ) = reveiver.call{value: msg.value, gas: 30000}("");
+        (bool success, ) = reveiver.call{value: amount, gas: 30000}("");
         require(success, "Owner withdraw failed");
     }
 
