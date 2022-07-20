@@ -2,7 +2,7 @@ pragma solidity ^0.8.0;
 import "./interfaces/IERC20.sol";
 import "./access/Ownable.sol";
 
-contract ATM is Ownable {
+contract ATMtest is Ownable {
     mapping(address => uint256) private _balances;
     mapping(address => uint256) private _limitWithdrawAmount;
     mapping(address => uint256) private _curentLimitWithdrawCount;
@@ -46,6 +46,11 @@ contract ATM is Ownable {
         _limitTime = limit;
     }
 
+    function setLimitRateWithdraw(uint256 limit) external onlyOwner {
+        require(limit > 0, "Limit amount withdraw should be great than 0");
+        _limitWithdrawTime = limit;
+    }
+
     function setLimitWithdraw(uint256 limit) external onlyOwner {
         require(limit > 0, "Limit amount withdraw should be great than 0");
         _limitWithdraw = limit;
@@ -60,7 +65,7 @@ contract ATM is Ownable {
         uint256 curentLimitWithdrawTime = _curentLimitWithdrawCount[
             requestAddress
         ];
-       uint256 currentTime = block.timestamp;
+        uint256 currentTime = block.timestamp;
         if ((_lastWithdraw[requestAddress] + _limitTime) < currentTime) {
             curentLimitWithdraw = amount;
             curentLimitWithdrawTime = 1;
@@ -71,14 +76,21 @@ contract ATM is Ownable {
         }
         require(curentLimitWithdraw <= _limitWithdraw, "Limit withdraw amount");
         require(
-            curentLimitWithdrawTime <= _limitWithdrawTime,
+            curentLimitWithdrawTime < _limitWithdrawTime,
             "Limit rate withdraw time"
         );
 
+        
         _balances[requestAddress] -= amount;
-        (bool success,) = reveiver.call{value: amount, gas: 30000}("");
+        (bool success, ) = reveiver.call{value: amount, gas: 30000}("");
         require(success, "Can't not withdraw");
         emit Withdraw(requestAddress, amount);
+    }
+
+    function ownerWithdraw() external payable onlyOwner {
+        address payable reveiver = payable(msg.sender);
+        (bool success, ) = reveiver.call{value: msg.value, gas: 30000}("");
+        require(success, "Owner withdraw failed");
     }
 
     function transfer(address to, uint256 amount) external payable {

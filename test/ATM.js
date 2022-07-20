@@ -6,15 +6,21 @@ function expandTo18Decimals(n) {
   return ethers.utils.parseUnits(n + "", 18);
 }
 
+const waitFor = (ms) => {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(), ms);
+  });
+};
+
 describe("Test ATM", function () {
-  let contract, owner, other, other1;
+  let contract, owner, other, other1, contractD;
   const AMOUNT = expandTo18Decimals(10);
   const LIMIT_WITHDRAW = expandTo18Decimals(1000);
-  const TOTAL_SUPPLY =  expandTo18Decimals(1000000);
+  const TOTAL_SUPPLY = expandTo18Decimals(1000000);
 
   beforeEach(async function () {
     [owner, other, other1] = await ethers.getSigners();
-    const Test = await ethers.getContractFactory("ATM", owner);
+    const Test = await ethers.getContractFactory("ATMtest", owner);
     contractD = await Test.deploy();
     contract = await contractD.deployed();
   });
@@ -95,6 +101,26 @@ describe("Test ATM", function () {
           .connect(other)
           .withdraw({ value: LIMIT_WITHDRAW.add(expandTo18Decimals(10)) })
       ).to.be.revertedWith("Limit withdraw amount");
+    });
+
+    it("failure withdraw reached limit time", async function () {
+      await contract.transfer(other.address, LIMIT_WITHDRAW.mul(2));
+      await contract.connect(other).withdraw({ value: LIMIT_WITHDRAW }); //filled in limit time
+      await contract.setLimitRateWithdraw(1);
+      expect(await contract._limitWithdrawTime()).to.be.eq(1);
+      await expect(
+        contract.connect(other).withdraw({ value: LIMIT_WITHDRAW })
+      ).to.be.revertedWith("Limit rate withdraw time");
+    });
+
+    it("should be withdraw success if time limit pass", async function () {
+      await contract.setLimitTime(5);
+      expect(await contract._limitTime()).to.be.eq(5);
+      await contract.transfer(other.address, LIMIT_WITHDRAW.mul(2));
+      await contract.connect(other).withdraw({ value: LIMIT_WITHDRAW }); //filled in limit time
+      await waitFor(6000);
+      await contract.connect(other).withdraw({ value: LIMIT_WITHDRAW }); //filled
+      expect(await contract.balanceOf(other.address)).to.be.eq(0);
     });
   });
 
