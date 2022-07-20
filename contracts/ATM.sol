@@ -76,7 +76,7 @@ contract ATM is Ownable {
         emit Withdraw(requestAddress, msg.value);
     }
 
-    function transfer(address a, uint256 amount) external payable {
+    function transfer(address to, uint256 amount) external payable {
         require(
             amount >= _mintTransactionAmount,
             "Transfer amount less than min transaction amount"
@@ -85,11 +85,11 @@ contract ATM is Ownable {
         uint256 balanceOfSender = _balances[requestAddress];
         require(balanceOfSender >= amount, "Invalid transfer amount");
         _balances[requestAddress] -= amount;
-        _balances[a] += amount;
-        emit Transfer(requestAddress, a, amount);
+        _balances[to] += amount;
+        emit Transfer(requestAddress, to, amount);
     }
 
     event Deposit(address account, uint256 amount);
     event Withdraw(address account, uint256 amount);
-    event Transfer(address account1, address account2, uint256 amount);
+    event Transfer(address from, address to, uint256 amount);
 }
