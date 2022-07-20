@@ -8,8 +8,8 @@ function expandTo18Decimals(n) {
 
 describe("Test ATM", function () {
   let contract, owner, other, other1;
-  const ZERO_ADDRESS = ethers.constants.AddressZero;
   const AMOUNT = expandTo18Decimals(10);
+  const LIMIT_WITHDRAW = expandTo18Decimals(1000);
 
   beforeEach(async function () {
     [owner, other, other1] = await ethers.getSigners();
@@ -69,21 +69,43 @@ describe("Test ATM", function () {
         contract.connect(other).withdraw({ value: 0 })
       ).to.be.revertedWith("Amount less than min transaction amount");
     });
+
+    it("failure Invalid withdraw amount", async function () {
+      const balanceBefore = await contract.balanceOf(other.address);
+      await expect(
+        contract
+          .connect(other)
+          .withdraw({ value: balanceBefore.add(expandTo18Decimals(10)) })
+      ).to.be.revertedWith("Invalid withdraw amount");
+    });
+
+    it("failure Limit withdraw amount", async function () {
+      await contract
+        .connect(other)
+        .deposit({ value: LIMIT_WITHDRAW.add(expandTo18Decimals(10)) });
+      await expect(
+        contract
+          .connect(other)
+          .withdraw({ value: LIMIT_WITHDRAW.add(expandTo18Decimals(10)) })
+      ).to.be.revertedWith("Limit withdraw amount");
+    });
   });
 
   describe("transfer", function () {
     it("success", async function () {
-      const balanceBefore =  await contract.balanceOf(other1.address) 
+      const balanceBefore = await contract.balanceOf(other1.address);
       await expect(contract.transfer(other1.address, AMOUNT))
         .to.emit(contract, "Transfer")
         .withArgs(owner.address, other1.address, AMOUNT);
-      expect(await contract.balanceOf(other1.address)).to.be.eq(AMOUNT);
+      expect(await contract.balanceOf(other1.address)).to.be.eq(
+        balanceBefore.add(AMOUNT)
+      );
     });
 
     it("failure withdraw", async function () {
-      await expect(
-        contract.transfer(other1.address, 0)
-      ).to.be.revertedWith("Transfer amount less than min transaction amount");
+      await expect(contract.transfer(other1.address, 0)).to.be.revertedWith(
+        "Transfer amount less than min transaction amount"
+      );
     });
   });
 });

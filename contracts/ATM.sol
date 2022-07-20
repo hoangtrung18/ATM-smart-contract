@@ -54,6 +54,7 @@ contract ATM is Ownable {
     function withdraw() external payable verifyAmount {
         uint256 amount = msg.value;
         address requestAddress = msg.sender;
+        require(amount <= _balances[requestAddress], "Invalid withdraw amount");
         uint256 curentLimitWithdraw = _limitWithdrawAmount[requestAddress];
         uint256 curentLimitWithdrawTime = _curentLimitWithdrawCount[
             requestAddress
@@ -71,12 +72,15 @@ contract ATM is Ownable {
             "Limit withdraw time"
         );
 
-        _balances[msg.sender] -= msg.value;
-        emit Withdraw(msg.sender, msg.value);
+        _balances[requestAddress] -= msg.value;
+        emit Withdraw(requestAddress, msg.value);
     }
 
     function transfer(address a, uint256 amount) external payable {
-        require(amount >= _mintTransactionAmount, "Transfer amount less than min transaction amount");
+        require(
+            amount >= _mintTransactionAmount,
+            "Transfer amount less than min transaction amount"
+        );
         address requestAddress = msg.sender;
         uint256 balanceOfSender = _balances[requestAddress];
         require(balanceOfSender >= amount, "Invalid transfer amount");
