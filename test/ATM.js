@@ -116,10 +116,10 @@ describe("Test ATM", function () {
     it("should be withdraw success if time limit pass", async function () {
       await contract.setLimitTime(5);
       expect(await contract._limitTime()).to.be.eq(5);
-      await contract.transfer(other.address, LIMIT_WITHDRAW.mul(2));
-      await contract.connect(other).withdraw(LIMIT_WITHDRAW }); //filled in limit time
+      await contract.connect(other).deposit({value: LIMIT_WITHDRAW.mul(2)});
+      await contract.connect(other).withdraw(LIMIT_WITHDRAW); //filled in limit time
       await waitFor(6000);
-      await contract.connect(other).withdraw(LIMIT_WITHDRAW }); //filled
+      await contract.connect(other).withdraw(LIMIT_WITHDRAW); //filled
       expect(await contract.balanceOf(other.address)).to.be.eq(0);
     });
 
