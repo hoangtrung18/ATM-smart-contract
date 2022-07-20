@@ -102,7 +102,7 @@ describe("Test ATM", function () {
       );
     });
 
-    it("failure withdraw", async function () {
+    it("failure transfer", async function () {
       await expect(contract.transfer(other1.address, 0)).to.be.revertedWith(
         "Transfer amount less than min transaction amount"
       );
