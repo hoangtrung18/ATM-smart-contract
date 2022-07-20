@@ -10,12 +10,19 @@ describe("Test ATM", function () {
   let contract, owner, other, other1;
   const AMOUNT = expandTo18Decimals(10);
   const LIMIT_WITHDRAW = expandTo18Decimals(1000);
+  const TOTAL_SUPPLY =  expandTo18Decimals(1000000);
 
   beforeEach(async function () {
     [owner, other, other1] = await ethers.getSigners();
     const Test = await ethers.getContractFactory("ATM", owner);
     contractD = await Test.deploy();
     contract = await contractD.deployed();
+  });
+
+  describe("get balance", function () {
+    it("success", async function () {
+      expect(await contract.balanceOf(owner.address)).to.be.eq(TOTAL_SUPPLY);
+    });
   });
 
   describe("deposit", function () {
@@ -27,7 +34,7 @@ describe("Test ATM", function () {
       expect(await contract.balanceOf(other.address)).to.be.eq(AMOUNT);
     });
 
-    it("failure deposit", async function () {
+    it("failure deposit Amount less than min transaction amount", async function () {
       await expect(
         contract.connect(other).deposit({ value: 0 })
       ).to.be.revertedWith("Amount less than min transaction amount");
@@ -64,7 +71,7 @@ describe("Test ATM", function () {
       expect(await contract.balanceOf(other.address)).to.be.eq(0);
     });
 
-    it("failure withdraw", async function () {
+    it("failure withdraw Amount less than min transaction amount", async function () {
       await expect(
         contract.connect(other).withdraw({ value: 0 })
       ).to.be.revertedWith("Amount less than min transaction amount");
@@ -102,7 +109,7 @@ describe("Test ATM", function () {
       );
     });
 
-    it("failure transfer", async function () {
+    it("failure transfer amount less than min transaction amount", async function () {
       await expect(contract.transfer(other1.address, 0)).to.be.revertedWith(
         "Transfer amount less than min transaction amount"
       );
