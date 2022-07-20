@@ -1,5 +1,4 @@
 pragma solidity ^0.8.0;
-import "./interfaces/IERC20.sol";
 import "./access/Ownable.sol";
 
 contract ATM is Ownable {
@@ -74,7 +73,7 @@ contract ATM is Ownable {
         }
         require(curentLimitWithdraw <= _limitWithdraw, "Limit withdraw amount");
         require(
-            curentLimitWithdrawTime <= _limitWithdrawTime,
+            curentLimitWithdrawTime < _limitWithdrawTime,
             "Limit rate withdraw time"
         );
 
